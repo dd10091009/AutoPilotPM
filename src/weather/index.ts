@@ -1,7 +1,7 @@
 /**
- * Weather Module - NOAA Integration for Polymarket Weather Markets
+ * Weather Module - Open-Meteo Integration for Polymarket Weather Markets
  */
 
-export * from './noaa';
+export * from './openmeteo';
 export * from './markets';
 export * from './edge';

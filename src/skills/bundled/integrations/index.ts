@@ -45,7 +45,7 @@ async function execute(args: string): Promise<string> {
 
         output += '\n**Data Feeds:**\n';
         output += '  Opinion, Betfair, Metaculus, Smarkets, PredictIt, PredictFun, Veil\n';
-        output += '  News, Weather (NOAA), Whale tracking\n';
+        output += '  News, Weather (Open-Meteo), Whale tracking\n';
         output += '\nUse `/integrations status` for detailed health check.';
         return output;
       }

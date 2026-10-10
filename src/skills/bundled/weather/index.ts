@@ -1,9 +1,9 @@
 /**
- * Weather Betting Skill - NOAA data for Polymarket weather markets
+ * Weather Betting Skill - Open-Meteo data for Polymarket weather markets
  *
  * Commands:
  * /weather scan                    Scan all weather markets for edge
- * /weather forecast <city>         Get NOAA forecast
+ * /weather forecast <city>         Get Open-Meteo forecast
  * /weather markets                 List active weather markets
  * /weather edge <market-id>        Calculate edge for specific market
  * /weather bet <market-id> <amt>   Execute bet
@@ -11,20 +11,20 @@
  * /weather history                 View bet history
  */
 
-import type { NOAAClient, WeatherForecast, ForecastPeriod } from '../../../weather/noaa';
+import type { OpenMeteoClient, WeatherForecast, ForecastPeriod } from '../../../weather/openmeteo';
 import type { WeatherMarketFinder, WeatherMarket } from '../../../weather/markets';
 import type { WeatherEdgeCalculator, WeatherEdge, BetRecommendation } from '../../../weather/edge';
 
 // Lazy-load weather modules
 async function getWeatherModules() {
-  const [noaa, markets, edge] = await Promise.all([
-    import('../../../weather/noaa'),
+  const [openMeteo, markets, edge] = await Promise.all([
+    import('../../../weather/openmeteo'),
     import('../../../weather/markets'),
     import('../../../weather/edge'),
   ]);
   return {
-    getNOAAClient: noaa.getNOAAClient,
-    CITY_COORDINATES: noaa.CITY_COORDINATES,
+    getOpenMeteoClient: openMeteo.getOpenMeteoClient,
+    CITY_COORDINATES: openMeteo.CITY_COORDINATES,
     getWeatherMarketFinder: markets.getWeatherMarketFinder,
     getWeatherEdgeCalculator: edge.getWeatherEdgeCalculator,
   };
@@ -95,7 +95,7 @@ function formatEdge(edge: WeatherEdge): string {
   output += `Location: ${edge.market.location}\n\n`;
 
   output += `**Probabilities:**\n`;
-  output += `  NOAA Forecast: ${edge.noaaProbability.toFixed(0)}%\n`;
+  output += `  Open-Meteo Forecast: ${edge.forecastProbability.toFixed(0)}%\n`;
   output += `  Market Price: ${(edge.marketPrice * 100).toFixed(0)}%\n`;
   output += `  **Edge: ${edge.edgePercent >= 0 ? '+' : ''}${edge.edgePercent.toFixed(1)}%**\n\n`;
 
@@ -120,8 +120,8 @@ async function handleForecast(args: string[]): Promise<string> {
   const city = args.join(' ').replace(/"/g, '');
 
   try {
-    const { getNOAAClient, CITY_COORDINATES } = await getWeatherModules();
-    const noaa = getNOAAClient();
+    const { getOpenMeteoClient, CITY_COORDINATES } = await getWeatherModules();
+    const openMeteo = getOpenMeteoClient();
 
     // Check if city is known
     const normalizedCity = city.toLowerCase();
@@ -130,7 +130,7 @@ async function handleForecast(args: string[]): Promise<string> {
       return `Unknown city: ${city}\n\nSupported cities include:\n${cities.join(', ')}`;
     }
 
-    const forecast = await noaa.getForecastByCity(city);
+    const forecast = await openMeteo.getForecastByCity(city);
     return formatForecast(forecast);
   } catch (error) {
     return `Failed to get forecast: ${error instanceof Error ? error.message : String(error)}`;
@@ -199,7 +199,7 @@ Try lowering threshold: \`/weather scan --threshold 3\``;
 
       output += `${direction} **${Math.abs(edge.edgePercent).toFixed(1)}% edge** (${side})\n`;
       output += `   ${edge.market.question.slice(0, 50)}...\n`;
-      output += `   NOAA: ${edge.noaaProbability.toFixed(0)}% | Market: ${(edge.marketPrice * 100).toFixed(0)}%\n`;
+      output += `   Open-Meteo: ${edge.forecastProbability.toFixed(0)}% | Market: ${(edge.marketPrice * 100).toFixed(0)}%\n`;
       output += `   ID: \`${edge.market.id.slice(0, 12)}...\`\n\n`;
     }
 
@@ -327,7 +327,7 @@ Minimum recommended: 5%`;
       side,
       amount,
       edge: edge.edgePercent,
-      forecast: `NOAA: ${edge.noaaProbability.toFixed(0)}% | Market: ${(edge.marketPrice * 100).toFixed(0)}%`,
+      forecast: `Open-Meteo: ${edge.forecastProbability.toFixed(0)}% | Market: ${(edge.marketPrice * 100).toFixed(0)}%`,
       timestamp: Date.now(),
       status: 'pending',
     };
@@ -515,11 +515,11 @@ export async function execute(args: string): Promise<string> {
     default:
       return `**Weather Betting**
 
-Use NOAA forecasts to find edge on Polymarket weather markets.
+Use Open-Meteo forecasts to find edge on Polymarket weather markets.
 
 **Commands:**
 \`\`\`
-/weather forecast <city>           Get NOAA forecast
+/weather forecast <city>           Get Open-Meteo forecast
 /weather markets                   List active weather markets
 /weather scan [--threshold 10]     Scan for edge opportunities
 /weather edge <market-id>          Calculate edge for market
@@ -537,16 +537,16 @@ Use NOAA forecasts to find edge on Polymarket weather markets.
 \`\`\`
 
 **How It Works:**
-1. NOAA provides official US weather forecasts
+1. Open-Meteo provides free forecasts (daily high/low, precipitation probability, snowfall)
 2. We match forecasts to Polymarket weather markets
-3. Edge = NOAA probability - Market price
+3. Edge = Open-Meteo probability - Market price
 4. Bet when edge exceeds threshold`;
   }
 }
 
 export default {
   name: 'weather',
-  description: 'Weather betting - use NOAA forecasts to find edge on Polymarket weather markets',
+  description: 'Weather betting - use Open-Meteo forecasts to find edge on Polymarket weather markets',
   commands: ['/weather'],
   handle: execute,
 };

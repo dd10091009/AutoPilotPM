@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Weather betting now uses Open-Meteo instead of NOAA/NWS for forecasts (`src/weather/noaa.ts` -> `src/weather/openmeteo.ts`). Daily high/low, precipitation probability and snowfall come from Open-Meteo; `OPEN_METEO_BASE_URL` can override the endpoint.
+- `WeatherEdge.noaaProbability` renamed to `forecastProbability`.
+- The `weather-nws` feed (severe weather alerts) is unchanged.
+
+### Added
+
+- `scripts/simulate-weather.ts` for simulating weather edge/bet sizing (`--offline` for synthetic data).
+
 ## [1.9.1] - 2026-09-12
 
 ### Changed

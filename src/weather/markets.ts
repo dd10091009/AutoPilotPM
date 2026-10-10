@@ -1,11 +1,11 @@
 /**
  * Polymarket Weather Market Matching
  *
- * Discover and match Polymarket weather markets with NOAA forecasts.
+ * Discover and match Polymarket weather markets with Open-Meteo forecasts.
  */
 
 import { logger } from '../utils/logger';
-import { CITY_COORDINATES } from './noaa';
+import { CITY_COORDINATES } from './openmeteo';
 
 // ============================================================================
 // Types

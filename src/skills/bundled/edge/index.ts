@@ -44,7 +44,7 @@ async function execute(args: string): Promise<string> {
         let output = `**Edge Scan**${category ? ` (${category})` : ''} (${result.marketsWithEdge}/${result.totalMarkets} with edge)\n\n`;
         for (const opp of opportunities.slice(0, 10)) {
           output += `${opp.recommendation} ${opp.market.question.slice(0, 50)}\n`;
-          output += `  Edge: ${opp.edgePercent.toFixed(2)}% | Market: ${(opp.marketPrice * 100).toFixed(0)}c | NOAA: ${opp.noaaProbability.toFixed(0)}%\n`;
+          output += `  Edge: ${opp.edgePercent.toFixed(2)}% | Market: ${(opp.marketPrice * 100).toFixed(0)}c | Open-Meteo: ${opp.forecastProbability.toFixed(0)}%\n`;
           output += `  Confidence: ${opp.confidence}\n\n`;
         }
         return output;
@@ -70,7 +70,7 @@ async function execute(args: string): Promise<string> {
           `Source 1 (${source1}): Price data not available (no ${source1} API configured)\n` +
           `Source 2 (${source2}): Price data not available (no ${source2} API configured)\n\n` +
           `To enable cross-source comparison, configure API keys for each source.\n` +
-          `Currently only weather edge (NOAA vs Polymarket) is supported via /edge scan.`;
+          `Currently only weather edge (Open-Meteo vs Polymarket) is supported via /edge scan.`;
       }
 
       case 'kelly': {
@@ -140,7 +140,7 @@ function helpText(): string {
 
 export default {
   name: 'edge',
-  description: 'Edge calculation for weather and prediction markets using NOAA data',
+  description: 'Edge calculation for weather and prediction markets using Open-Meteo data',
   commands: ['/edge'],
   handle: execute,
 };

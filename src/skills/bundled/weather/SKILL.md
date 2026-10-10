@@ -1,6 +1,6 @@
 ---
 name: weather
-description: "Weather betting - NOAA data for Polymarket weather markets"
+description: "Weather betting - Open-Meteo data for Polymarket weather markets"
 command: weather
 emoji: "🌤️"
 gates:
@@ -10,13 +10,13 @@ gates:
 
 # Weather Betting
 
-Use NOAA weather forecasts to find edge on Polymarket weather markets.
+Use Open-Meteo weather forecasts to find edge on Polymarket weather markets.
 
 ## Commands
 
 ```
 /weather scan                              Scan all weather markets for edge
-/weather forecast <city>                   Get NOAA forecast for a city
+/weather forecast <city>                   Get Open-Meteo forecast for a city
 /weather markets                           List active weather markets
 /weather edge <market-id>                  Calculate edge for specific market
 /weather bet <market-id> <amount>          Execute bet
@@ -36,18 +36,18 @@ Use NOAA weather forecasts to find edge on Polymarket weather markets.
 
 ## How It Works
 
-1. **Fetch NOAA Forecast**: Get official NWS weather data (free, no API key)
+1. **Fetch Open-Meteo Forecast**: Get global forecast data from Open-Meteo (free, no API key)
 2. **Match to Markets**: Find Polymarket weather markets for the same location/date
-3. **Calculate Edge**: Compare NOAA probability to market YES price
-4. **Bet if Edge**: If NOAA probability differs significantly from market, bet
+3. **Calculate Edge**: Compare Open-Meteo probability to market YES price
+4. **Bet if Edge**: If Open-Meteo probability differs significantly from market, bet
 
 ## Edge Calculation
 
 ```
-Edge = NOAA Probability - Market Price
+Edge = Open-Meteo Probability - Market Price
 
 Example:
-  NOAA says 80% chance of rain in NYC tomorrow
+  Open-Meteo says 80% chance of rain in NYC tomorrow
   Polymarket "Will it rain in NYC?" YES price: 0.65 (65%)
   Edge = 80% - 65% = +15% -> Bet YES
 ```

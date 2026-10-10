@@ -1,11 +1,11 @@
 /**
  * Weather Edge Calculator
  *
- * Calculate betting edge by comparing NOAA forecasts to Polymarket odds.
+ * Calculate betting edge by comparing Open-Meteo forecasts to Polymarket odds.
  */
 
 import { logger } from '../utils/logger';
-import { NOAAClient, getNOAAClient, ForecastPeriod } from './noaa';
+import { OpenMeteoClient, getOpenMeteoClient, ForecastPeriod } from './openmeteo';
 import { WeatherMarket, WeatherMarketFinder, getWeatherMarketFinder } from './markets';
 
 // ============================================================================
@@ -15,7 +15,7 @@ import { WeatherMarket, WeatherMarketFinder, getWeatherMarketFinder } from './ma
 export interface WeatherEdge {
   market: WeatherMarket;
   forecast: ForecastPeriod | null;
-  noaaProbability: number;      // 0-100
+  forecastProbability: number;      // 0-100
   marketPrice: number;          // 0-1 (YES price)
   edge: number;                 // Positive = bet YES, Negative = bet NO
   edgePercent: number;          // Edge as percentage
@@ -50,11 +50,11 @@ const KELLY_FRACTION = 0.25;      // Use quarter Kelly
 // ============================================================================
 
 export class WeatherEdgeCalculator {
-  private noaa: NOAAClient;
+  private weather: OpenMeteoClient;
   private markets: WeatherMarketFinder;
 
-  constructor(noaa?: NOAAClient, markets?: WeatherMarketFinder) {
-    this.noaa = noaa || getNOAAClient();
+  constructor(weather?: OpenMeteoClient, markets?: WeatherMarketFinder) {
+    this.weather = weather || getOpenMeteoClient();
     this.markets = markets || getWeatherMarketFinder();
   }
 
@@ -64,7 +64,7 @@ export class WeatherEdgeCalculator {
   async calculateEdge(market: WeatherMarket): Promise<WeatherEdge> {
     // Get forecast if we have coordinates
     let forecast: ForecastPeriod | null = null;
-    let noaaProbability = 50; // Default to 50% if we can't determine
+    let forecastProbability = 50; // Default to 50% if we can't determine
 
     if (market.coordinates && market.targetDate) {
       try {
@@ -75,7 +75,7 @@ export class WeatherEdgeCalculator {
         );
 
         if (forecast) {
-          noaaProbability = this.calculateNOAAProbability(market, forecast);
+          forecastProbability = this.calculateForecastProbability(market, forecast);
         }
       } catch (error) {
         logger.warn(`[EdgeCalc] Could not get forecast for ${market.location}:`, error);
@@ -90,8 +90,8 @@ export class WeatherEdgeCalculator {
     const marketPrice = yesOutcome?.price ?? 0.5;
 
     // Calculate edge
-    const noaaDecimal = noaaProbability / 100;
-    const edge = noaaDecimal - marketPrice;
+    const forecastDecimal = forecastProbability / 100;
+    const edge = forecastDecimal - marketPrice;
     const edgePercent = edge * 100;
 
     // Determine confidence
@@ -114,16 +114,16 @@ export class WeatherEdgeCalculator {
       reasoning = 'No forecast data available for accurate edge calculation';
     } else if (edge > 0) {
       recommendation = 'YES';
-      reasoning = `NOAA probability (${noaaProbability.toFixed(0)}%) exceeds market price (${(marketPrice * 100).toFixed(0)}%) by ${edgePercent.toFixed(1)}%`;
+      reasoning = `Open-Meteo probability (${forecastProbability.toFixed(0)}%) exceeds market price (${(marketPrice * 100).toFixed(0)}%) by ${edgePercent.toFixed(1)}%`;
     } else {
       recommendation = 'NO';
-      reasoning = `Market price (${(marketPrice * 100).toFixed(0)}%) exceeds NOAA probability (${noaaProbability.toFixed(0)}%) by ${Math.abs(edgePercent).toFixed(1)}%`;
+      reasoning = `Market price (${(marketPrice * 100).toFixed(0)}%) exceeds Open-Meteo probability (${forecastProbability.toFixed(0)}%) by ${Math.abs(edgePercent).toFixed(1)}%`;
     }
 
     return {
       market,
       forecast,
-      noaaProbability,
+      forecastProbability,
       marketPrice,
       edge,
       edgePercent,
@@ -188,7 +188,7 @@ export class WeatherEdgeCalculator {
     const suggestedAmount = Math.max(bankroll * adjustedKelly, 1); // Minimum $1
 
     // Expected value
-    const winProb = side === 'YES' ? edge.noaaProbability / 100 : 1 - edge.noaaProbability / 100;
+    const winProb = side === 'YES' ? edge.forecastProbability / 100 : 1 - edge.forecastProbability / 100;
     const winPayout = suggestedAmount / odds - suggestedAmount;
     const lossPayout = -suggestedAmount;
     const expectedValue = winProb * winPayout + (1 - winProb) * lossPayout;
@@ -215,7 +215,7 @@ export class WeatherEdgeCalculator {
     lon: number,
     targetDate: Date
   ): Promise<ForecastPeriod | null> {
-    const forecast = await this.noaa.getForecast(lat, lon);
+    const forecast = await this.weather.getForecast(lat, lon);
 
     for (const period of forecast.periods) {
       const periodStart = new Date(period.startTime);
@@ -245,9 +245,9 @@ export class WeatherEdgeCalculator {
   }
 
   /**
-   * Calculate NOAA probability based on market type and forecast
+   * Calculate Open-Meteo probability based on market type and forecast
    */
-  private calculateNOAAProbability(market: WeatherMarket, forecast: ForecastPeriod): number {
+  private calculateForecastProbability(market: WeatherMarket, forecast: ForecastPeriod): number {
     switch (market.metric) {
       case 'temperature':
         return this.calculateTempProbability(market, forecast);
@@ -294,14 +294,14 @@ export class WeatherEdgeCalculator {
    * Calculate precipitation probability
    */
   private calculatePrecipProbability(market: WeatherMarket, forecast: ForecastPeriod): number {
-    // NOAA provides precipitation probability directly
-    const noaaProb = forecast.probabilityOfPrecipitation.value;
+    // Open-Meteo provides daily max precipitation probability
+    const forecastProb = forecast.probabilityOfPrecipitation.value;
 
-    if (noaaProb === null) return 50;
+    if (forecastProb === null) return 50;
 
-    // If market is about "will it rain", use NOAA probability directly
+    // If market is about "will it rain", use Open-Meteo probability directly
     if (!market.threshold) {
-      return noaaProb;
+      return forecastProb;
     }
 
     // If market has amount threshold (e.g., "more than 1 inch")
@@ -309,11 +309,11 @@ export class WeatherEdgeCalculator {
     const threshold = market.threshold;
 
     // Higher amounts are less likely
-    if (threshold >= 2) return Math.min(noaaProb * 0.3, 30);
-    if (threshold >= 1) return Math.min(noaaProb * 0.5, 50);
-    if (threshold >= 0.5) return Math.min(noaaProb * 0.7, 70);
+    if (threshold >= 2) return Math.min(forecastProb * 0.3, 30);
+    if (threshold >= 1) return Math.min(forecastProb * 0.5, 50);
+    if (threshold >= 0.5) return Math.min(forecastProb * 0.7, 70);
 
-    return noaaProb;
+    return forecastProb;
   }
 
   /**

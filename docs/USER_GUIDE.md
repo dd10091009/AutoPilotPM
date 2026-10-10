@@ -848,11 +848,11 @@ Convert natural language descriptions into executable trading strategies:
 
 ### Weather Betting
 
-Use NOAA weather forecasts to find edge on Polymarket weather markets:
+Use Open-Meteo weather forecasts to find edge on Polymarket weather markets:
 
 ```
 /weather scan                    Scan all weather markets for edge
-/weather forecast "New York"     Get NOAA forecast
+/weather forecast "New York"     Get Open-Meteo forecast
 /weather markets                 List active weather markets
 /weather edge <market-id>        Calculate edge for specific market
 /weather bet <market-id> 10      Execute $10 bet
@@ -861,15 +861,15 @@ Use NOAA weather forecasts to find edge on Polymarket weather markets:
 ```
 
 **How It Works:**
-1. Fetch NOAA forecast (free, no API key)
+1. Fetch Open-Meteo forecast (free, no API key)
 2. Match to Polymarket weather markets
-3. Compare NOAA probability to market YES price
+3. Compare Open-Meteo probability to market YES price
 4. Bet if significant edge exists
 
 **Edge Calculation:**
 ```
-Edge = NOAA Probability - Market Price
-Example: NOAA 80% rain, Market 65% → +15% edge → Bet YES
+Edge = Open-Meteo Probability - Market Price
+Example: Open-Meteo 80% rain, Market 65% → +15% edge → Bet YES
 ```
 
 **Supported Market Types:** Temperature, precipitation, snow, record highs

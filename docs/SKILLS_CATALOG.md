@@ -96,7 +96,7 @@ Complete reference of all bundled skills organized by category. Use `/skills` in
 | whale-tracking | `/whales` | Large wallet activity and position monitoring |
 | analytics | `/analytics` | Opportunity analytics and performance breakdown |
 | metrics | `/metrics` | System health metrics and Prometheus export |
-| weather | `/weather` | NOAA weather data for Polymarket weather markets |
+| weather | `/weather` | Open-Meteo weather data for Polymarket weather markets |
 
 ## AI & Strategy (15 skills)
 
